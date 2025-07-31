@@ -1,34 +1,29 @@
-const { quitoPool: catalogPool } = require('../config/db');
+const db = require('../config/db'); // Importamos la conexión única
 
-exports.getServicios = async (req, res) => {
-    try {
-        const result = await catalogPool.query('SELECT * FROM servicios ORDER BY nombre');
-        res.status(200).json(result.rows);
-    } catch (err) { res.status(500).json({ error: err.message }); }
+exports.getServicios = (req, res) => {
+    db.all("SELECT * FROM servicios ORDER BY nombre", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(200).json(rows);
+    });
 };
 
-exports.getCiudades = async (req, res) => {
-     try {
-        const result = await catalogPool.query('SELECT * FROM ciudades ORDER BY nombre');
-        res.status(200).json(result.rows);
-    } catch (err) { res.status(500).json({ error: err.message }); }
+exports.getCiudades = (req, res) => {
+    db.all("SELECT * FROM ciudades ORDER BY nombre", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(200).json(rows);
+    });
 };
 
-exports.getTiposVehiculo = async (req, res) => {
-     try {
-        const result = await catalogPool.query('SELECT * FROM tipos_vehiculos ORDER BY nombre');
-        res.status(200).json(result.rows);
-    } catch (err) { 
-        res.status(500).json({ error: err.message }); 
-    }
+exports.getTiposVehiculo = (req, res) => {
+    db.all("SELECT * FROM tipos_vehiculos ORDER BY nombre", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(200).json(rows);
+    });
 };
 
-exports.getProductos = async (req, res) => {
-    try {
-        const result = await catalogPool.query('SELECT * FROM productos ORDER BY nombre');
-        res.status(200).json(result.rows);
-    } catch (err) {
-        res.status(500).json({error: err.message});    
-    }    
+exports.getProductos = (req, res) => {
+    db.all("SELECT * FROM productos ORDER BY nombre", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(200).json(rows);
+    });
 };
-
