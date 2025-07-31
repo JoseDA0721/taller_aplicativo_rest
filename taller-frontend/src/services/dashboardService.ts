@@ -2,10 +2,11 @@ const BASE_URL = 'http://localhost:5000/api';
 
 export async function fetchDashboardStats() {
   try {
+
     const [clientesRes, vehiculosRes, ordenesRes] = await Promise.all([
-      fetch(`${BASE_URL}/clientes?ciudad=guayaquil`),
-      fetch(`${BASE_URL}/vehiculos?ciudad=guayaquil`),
-      fetch(`${BASE_URL}/ordenes?ciudad=guayaquil`),
+      fetch(`${BASE_URL}/clientes`),
+      fetch(`${BASE_URL}/vehiculos`),
+      fetch(`${BASE_URL}/ordenes`),
     ]);
 
     if (!clientesRes.ok || !vehiculosRes.ok || !ordenesRes.ok) {

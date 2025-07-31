@@ -50,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
 
             <footer className="text-xs text-blue-200 mt-6">
-              © 2025 – Proyecto BDD
+              © 2025 – Taller Mecánico. Todos los derechos reservados.
             </footer>
           </aside>
 

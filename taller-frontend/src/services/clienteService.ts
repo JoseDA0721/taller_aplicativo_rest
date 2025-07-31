@@ -1,9 +1,31 @@
 const BASE_URL = 'http://localhost:5000/api';
 
-export async function getClientes(ciudad?: string) {
+export async function getClienteDetails(cedula: string) {
   try {
-    const url = ciudad ? `${BASE_URL}/clientes?ciudad=${ciudad}` : `${BASE_URL}/clientes`;
-    const res = await fetch(url);
+    // Hacemos dos peticiones en paralelo para eficiencia
+    const [clienteRes, vehiculosRes] = await Promise.all([
+      fetch(`${BASE_URL}/cliente/${cedula}`),
+      fetch(`${BASE_URL}/vehiculo/cliente/${cedula}`)
+    ]);
+
+    if (!clienteRes.ok) {
+      return { success: false, message: 'Cliente no encontrado.' };
+    }
+
+    const cliente = await clienteRes.json();
+    // Los vehículos son opcionales, si no se encuentran, devolvemos un array vacío.
+    const vehiculos = vehiculosRes.ok ? await vehiculosRes.json() : [];
+
+    return { success: true, data: { cliente, vehiculos } };
+  } catch (error) {
+    console.error(error);
+    return { success: false, message: 'Error de conexión.' };
+  }
+}
+
+export async function getClientes() {
+  try {
+    const res = await fetch(`${BASE_URL}/clientes`);
     if (!res.ok) throw new Error('Error al obtener los clientes');
     return await res.json();
   } catch (error) {

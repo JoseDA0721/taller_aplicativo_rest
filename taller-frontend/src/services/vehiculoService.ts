@@ -32,7 +32,7 @@ export async function createVehiculo(vehiculo: any) {
 
 export async function deleteVehiculo(placa: string) {
   try {
-    const res = await fetch(`http://localhost:5000/api/vehiculo/${placa}`, {
+    const res = await fetch(`${BASE_URL}/vehiculo/${placa}`, {
       method: 'DELETE'
     });
     if (!res.ok) {
