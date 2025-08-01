@@ -82,6 +82,11 @@ db.serialize(() => {
         (2, 'Alineación', 30.0),
         (3, 'Revisión general', 50.0)`);
 
+    db.run(`INSERT INTO servicios_productos (servicio_id, producto_id, cantidad) VALUES 
+        (1, 1, 1),   -- Cambio de aceite usa 1 Aceite
+        (1, 2, 1),   -- y 1 Filtro de aire
+        (3, 3, 1)    -- Revisión general usa 1 Batería`); 
+
     db.run(`INSERT INTO clientes VALUES 
         ('1723456789', 'Luis Pérez', '0991234567', 'luis@example.com', 1),
         ('0923456789', 'Ana Gómez', '0987654321', 'ana@example.com', 2)`);

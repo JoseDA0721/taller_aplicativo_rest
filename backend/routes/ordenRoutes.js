@@ -6,7 +6,7 @@ const {
     getOrden,
     getOrdenesByCliente,
     updateOrden,
-    detallesOrden
+    getDetallesOrden
 } = require('../controllers/ordenController');
 
 router.get('/ordenes', getAllOrdenes);
@@ -14,7 +14,7 @@ router.post('/orden', createOrden);
 router.get('/orden/id/:orden_id', getOrden);
 router.get('/orden/cliente/:cedula', getOrdenesByCliente);
 router.put('/orden/:orden_id', updateOrden);
-router.get('/orden/detalles/:orden_id', detallesOrden);
+router.get('/orden/detalles/:orden_id', getDetallesOrden);
 
 
 module.exports = router;

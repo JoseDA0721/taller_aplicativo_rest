@@ -11,7 +11,7 @@ interface Detalle {
   producto_id?: number | null;
   cantidad: number;
   precio: number;
-  nombre: string; // Se usa para mostrar el nombre en la lista de detalles
+  nombre: string;
 }
 
 interface Orden {
@@ -20,8 +20,7 @@ interface Orden {
   fecha: string;
   estado: string;
   ciudad_id: number;
-  empleado_cedula: string;
-  form_pago_id: number;
+  forma_pago_id: number;
   detalles: Omit<Detalle, 'nombre'>[]; // 'nombre' no se envía al backend
 }
 
@@ -52,8 +51,7 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
     fecha: new Date().toISOString().split('T')[0],
     estado: 'Recibida', // El estado por defecto ahora es "Recibida"
     ciudad_id: 1,
-    empleado_cedula: '0100000002', // Empleado por defecto
-    form_pago_id: 1, // Pago por defecto
+    forma_pago_id: 1, // Pago por defecto
     detalles: [] as Detalle[]
   });
 
@@ -126,7 +124,7 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
     const { name, value } = e.target;
     setForm(prev => ({
       ...prev,
-      [name]: ['ciudad_id', 'form_pago_id'].includes(name) ? parseInt(value) : value
+      [name]: ['ciudad_id', 'forma_pago_id'].includes(name) ? parseInt(value) : value
     }));
   };
 
@@ -282,6 +280,23 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
                   <p className="text-sm text-gray-500 bg-gray-100 p-2 rounded">Este cliente no tiene vehículos registrados.</p>
                 )}
                 
+                {/* --- CAMBIO AÑADIDO AQUÍ --- */}
+                <div className="mt-4">
+                  <label htmlFor="forma_pago_id" className="block text-sm font-medium text-gray-700">Forma de Pago</label>
+                  <select
+                    id="forma_pago_id"
+                    name="forma_pago_id"
+                    value={form.forma_pago_id}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-black p-2 rounded text-black bg-white"
+                  >
+                    <option value={1}>Efectivo</option>
+                    <option value={2}>Tarjeta</option>
+                    <option value={3}>Transferencia</option>
+                  </select>
+                </div>
+                {/* --- FIN DEL CAMBIO --- */}
+
                 {/* --- SECCIÓN PARA AÑADIR PRODUCTOS/SERVICIOS --- */}
                 <div className="mt-4 border-t pt-4">
                     <h4 className="font-semibold text-gray-800 mb-2">Añadir Items a la Orden</h4>
@@ -319,21 +334,21 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
                     <div className="mt-4">
                         <h5 className="font-semibold text-sm text-gray-800">Detalles:</h5>
                         {form.detalles.length === 0 ? (
-                            <p className="text-sm text-gray-50 mt-2 p-2 bg-gray-50 rounded">No hay items en la orden.</p>
+                            <p className="text-sm text-gray-500 mt-2 p-2 bg-gray-100 rounded">No hay items en la orden.</p>
                         ) : (
                             <div className="mt-2 border rounded max-h-48 overflow-y-auto">
                                 {form.detalles.map((item, index) => (
-                                    <div key={index} className="flex justify-between items-center text-gray-500 p-2 border-b last:border-b-0">
-                                        <span className="text-sm">{item.nombre} (x{item.cantidad})</span>
+                                    <div key={index} className="flex justify-between items-center p-2 border-b last:border-b-0">
+                                        <span className="text-sm text-gray-800">{item.nombre} (x{item.cantidad})</span>
                                         <div className="flex items-center gap-4">
-                                        <span className="text-sm font-semibold">${(item.precio * item.cantidad).toFixed(2)}</span>
+                                        <span className="text-sm font-semibold text-gray-900">${(item.precio * item.cantidad).toFixed(2)}</span>
                                         <button onClick={() => handleRemoveItem(index)} className="text-red-500 hover:text-red-700">
-                                                <FaTimes size={12}/>
+                                            <FaTimes size={12}/>
                                         </button>
                                         </div>
                                     </div>
                                 ))}
-                                <div className="flex justify-end p-2 bg-gray-1 font-bold text-lg text-gray-800">
+                                <div className="flex justify-end p-2 bg-gray-100 font-bold text-lg text-gray-800">
                                     Total: ${totalOrden.toFixed(2)}
                                 </div>
                             </div>

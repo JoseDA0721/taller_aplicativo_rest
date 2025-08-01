@@ -38,49 +38,104 @@ exports.getOrdenesByCliente = (req, res) => {
     });
 };
 // Crear una nueva orden de trabajo
-exports.createOrden = (req, res) => {
-    const { cliente_cedula, placa, fecha, estado, ciudad_id, forma_pago } = req.body;
+exports.createOrden = async (req, res) => {
+    const { cliente_cedula, placa, fecha, estado, ciudad_id, forma_pago_id, detalles } = req.body;
 
-    if (!cliente_cedula || !placa || !ciudad_id) {
-        return res.status(400).json({ message: 'Faltan datos críticos (cliente, placa o ciudad).' });
+    if (!cliente_cedula || !placa || !ciudad_id || !detalles || !detalles.length) {
+        return res.status(400).json({ message: 'Faltan datos críticos (cliente, placa, ciudad o detalles).' });
     }
 
-    // 1. Definir el prefijo y la consulta para el último ID
-    const prefijo = 'OT';
-    const lastIdSql = `SELECT orden_id FROM ordenes_trabajo WHERE orden_id LIKE '${prefijo}%' ORDER BY orden_id DESC LIMIT 1`;
+    try {
+        // Iniciar transacción
+        await new Promise((resolve, reject) => db.run('BEGIN', (err) => err ? reject(err) : resolve()));
 
-    db.get(lastIdSql, [], (err, row) => {
-        if (err) {
-            return res.status(500).json({ error: "Error al generar ID de orden: " + err.message });
+        // 1. Procesar los detalles para expandir los servicios en productos
+        const finalDetails = [];
+        let totalOrden = 0;
+
+        for (const item of detalles) {
+            if (item.servicio_id) {
+                // Añadir el servicio principal a la lista de detalles y al total
+                finalDetails.push({
+                    servicio_id: item.servicio_id,
+                    producto_id: null,
+                    cantidad: 1,
+                    precio: item.precio 
+                });
+                totalOrden += item.precio;
+
+                // Buscar productos asociados al servicio en la "receta"
+                const recetaSql = `
+                    SELECT sp.producto_id, p.precio, sp.cantidad 
+                    FROM servicios_productos sp
+                    JOIN productos p ON sp.producto_id = p.producto_id
+                    WHERE sp.servicio_id = ?`;
+                
+                const productosDelServicio = await new Promise((resolve, reject) => {
+                    db.all(recetaSql, [item.servicio_id], (err, rows) => err ? reject(err) : resolve(rows));
+                });
+
+                // Añadir cada producto de la receta a los detalles y al total
+                for (const producto of productosDelServicio) {
+                    finalDetails.push({
+                        servicio_id: null,
+                        producto_id: producto.producto_id,
+                        cantidad: producto.cantidad,
+                        precio: producto.precio
+                    });
+                    totalOrden += producto.precio * producto.cantidad;
+                }
+
+            } else if (item.producto_id) {
+                // Añadir un producto directo a la lista y al total
+                finalDetails.push(item);
+                totalOrden += item.precio * item.cantidad;
+            }
         }
+
+        // 2. Generar el nuevo ID de la orden
+        const lastIdSql = `SELECT orden_id FROM ordenes_trabajo ORDER BY orden_id DESC LIMIT 1`;
+        const lastIdRow = await new Promise((resolve, reject) => {
+            db.get(lastIdSql, [], (err, row) => err ? reject(err) : resolve(row));
+        });
         
         let nextNumber = 1;
-        // 2. Si ya existe un ID, extraer el número, sumarle 1
-        if (row) {
-            // Extrae la parte numérica del ID (ej. '001' de 'OT001') y la convierte a número
-            nextNumber = parseInt(row.orden_id.substring(2)) + 1;
+        if (lastIdRow) {
+            nextNumber = parseInt(lastIdRow.orden_id.substring(2)) + 1;
         }
+        const newOrdenId = `OT${String(nextNumber).padStart(3, '0')}`;
+
+        // 3. Insertar la cabecera de la orden con el total ya calculado
+        const ordenQuery = `
+            INSERT INTO ordenes_trabajo (orden_id, cliente_cedula, placa, fecha, estado, ciudad_id, forma_pago_id, total) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
         
-        // 3. Formatear el nuevo número con ceros a la izquierda (ej. 2 -> "002")
-        const newOrdenId = `${prefijo}${String(nextNumber).padStart(3, '0')}`;
-        
-        // 4. Insertar la nueva orden con el ID generado
-        const insertSql = `INSERT INTO ordenes_trabajo (
-                            orden_id, 
-                            cliente_cedula, 
-                            placa, fecha, 
-                            estado, 
-                            ciudad_id, 
-                            forma_pago_id, 
-                            total
-                        ) VALUES (?, ?, ?, ?, ?, ?)`;
-        db.run(insertSql, [newOrdenId, cliente_cedula, placa, fecha, estado, ciudad_id], function(err) {
-            if (err) {
-                return res.status(500).json({ error: "Error al crear la orden: " + err.message });
-            }
-            res.status(201).json({ message: `Orden ${newOrdenId} creada exitosamente.` });
+        await new Promise((resolve, reject) => {
+            db.run(ordenQuery, [newOrdenId, cliente_cedula, placa, fecha, estado, ciudad_id, forma_pago_id, totalOrden], (err) => {
+                err ? reject(err) : resolve();
+            });
         });
-    });
+
+        // 4. Insertar todos los detalles (servicios y productos) en la base de datos
+        const detalleInsertStmt = db.prepare('INSERT INTO detalles_orden (orden_id, servicio_id, producto_id, cantidad, precio) VALUES (?, ?, ?, ?, ?)');
+        for (const detalle of finalDetails) {
+            detalleInsertStmt.run(newOrdenId, detalle.servicio_id, detalle.producto_id, detalle.cantidad, detalle.precio);
+        }
+        await new Promise((resolve, reject) => {
+            detalleInsertStmt.finalize(err => err ? reject(err) : resolve());
+        });
+
+        // Confirmar la transacción
+        await new Promise((resolve, reject) => db.run('COMMIT', (err) => err ? reject(err) : resolve()));
+        
+        res.status(201).json({ message: `Orden ${newOrdenId} creada con todos sus productos. Total: ${totalOrden.toFixed(2)}` });
+
+    } catch (err) {
+        // Si algo falla, revertir todos los cambios
+        await new Promise((resolve) => db.run('ROLLBACK', () => resolve()));
+        console.error('Error en la transacción:', err);
+        res.status(500).json({ error: 'Error en la transacción de la orden: ' + err.message });
+    }
 };
 
 // Actualizar el estado de una orden
@@ -100,17 +155,30 @@ exports.updateOrden = (req, res) => {
     });
 };
 
-exports.detallesOrden = (req, res) => {
+exports.getDetallesOrden = (req, res) => {
     const { orden_id } = req.params;
 
-    const sql = `SELECT * FROM detalles_orden WHERE orden_id = ?`;
+    // Esta consulta une los detalles con las tablas de servicios y productos
+    // para obtener los nombres de los items.
+    const sql = `
+        SELECT
+            d.detalle_id,
+            d.cantidad,
+            d.precio,
+            COALESCE(s.nombre, p.nombre) as nombre_item,
+            CASE
+                WHEN d.servicio_id IS NOT NULL THEN 'Servicio'
+                ELSE 'Producto'
+            END as tipo_item
+        FROM detalles_orden d
+        LEFT JOIN servicios s ON d.servicio_id = s.servicio_id
+        LEFT JOIN productos p ON d.producto_id = p.producto_id
+        WHERE d.orden_id = ?
+    `;
 
     db.all(sql, [orden_id], (err, rows) => {
         if (err) {
             return res.status(500).json({ error: err.message });
-        }
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Detalles de orden no encontrados' });
         }
         res.status(200).json(rows);
     });

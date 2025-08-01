@@ -8,27 +8,14 @@ interface Servicio {
   precio: number | string
 }
 
-interface Ciudad {
-  ciudad_id: number
-  nombre: string
-}
-
-interface TipoVehiculo {
-  tipo_id: number
-  nombre: string
-}
-
 interface Producto {
   producto_id: number
   nombre: string
   precio: number | string
-  stock: number
 }
 
 export default function CatalogoPage() {
   const [servicios, setServicios] = useState<Servicio[]>([])
-  const [ciudades, setCiudades] = useState<Ciudad[]>([])
-  const [tipos, setTipos] = useState<TipoVehiculo[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
 
   useEffect(() => {
@@ -50,8 +37,6 @@ export default function CatalogoPage() {
         ])
 
         setServicios(sData)
-        setCiudades(cData)
-        setTipos(tData)
         setProductos(pData)
       } catch (error) {
         console.error('Error al cargar catálogo:', error)
@@ -77,33 +62,13 @@ export default function CatalogoPage() {
           ],
         },
         {
-          title: 'Ciudades',
-          data: ciudades,
-          columns: ['ID', 'Nombre'],
-          rows: (c: Ciudad) => [
-            c.ciudad_id,
-            <span className="px-2 py-1 text-xs rounded bg-gray-300 text-gray-800 font-semibold">
-              {c.nombre}
-            </span>
-          ],
-        },
-        {
-          title: 'Tipos de Vehículo',
-          data: tipos,
-          columns: ['ID', 'Nombre'],
-          rows: (t: TipoVehiculo) => [t.tipo_id, t.nombre],
-        },
-        {
           title: 'Productos',
           data: productos,
-          columns: ['ID', 'Nombre', 'Precio', 'Stock'],
+          columns: ['ID', 'Nombre', 'Precio'],
           rows: (p: Producto) => [
             p.producto_id,
             p.nombre,
             <span className="text-green-700 font-semibold">${Number(p.precio).toFixed(2)}</span>,
-            <span className={`font-semibold ${p.stock > 10 ? 'text-green-600' : 'text-red-600'}`}>
-              {p.stock}
-            </span>
           ],
         },
       ].map((section, idx) => (
