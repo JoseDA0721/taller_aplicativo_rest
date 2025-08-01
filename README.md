@@ -1,6 +1,6 @@
-# Sistema de Gestión de Órdenes para Taller Automotriz
+# Sistema de Gestión para Taller Automotriz
 
-Este es un proyecto Full-Stack que simula un sistema para la gestión de órdenes de trabajo en un taller automotriz. La aplicación permite crear y visualizar órdenes de trabajo, asociando clientes, vehículos, servicios y productos, con una interfaz moderna e interactiva.
+Este es un proyecto Full-Stack de un sistema para la gestión en un taller automotriz. La aplicación permite crear y visualizar cliente, vehiculos y órdenes de trabajo, con una interfaz sencilla e interactiva.
 
 ## Tecnologías Utilizadas
 
@@ -71,7 +71,7 @@ npm run dev
 
 Una vez que tanto el backend como el frontend estén en ejecución, abre tu navegador y ve a la siguiente dirección:
 
-[**http://localhost:3000/ordenes**](http://localhost:3000/ordenes)
+[**http://localhost:3000**](http://localhost:3000)
 
 Desde allí, podrás interactuar con la aplicación, crear nuevas órdenes de trabajo, ver los detalles de las existentes y cambiar su estado.
 
