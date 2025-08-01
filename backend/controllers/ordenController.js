@@ -39,7 +39,7 @@ exports.getOrdenesByCliente = (req, res) => {
 };
 // Crear una nueva orden de trabajo
 exports.createOrden = (req, res) => {
-    const { cliente_cedula, placa, fecha, estado, ciudad_id } = req.body;
+    const { cliente_cedula, placa, fecha, estado, ciudad_id, forma_pago } = req.body;
 
     if (!cliente_cedula || !placa || !ciudad_id) {
         return res.status(400).json({ message: 'Faltan datos críticos (cliente, placa o ciudad).' });
@@ -65,7 +65,15 @@ exports.createOrden = (req, res) => {
         const newOrdenId = `${prefijo}${String(nextNumber).padStart(3, '0')}`;
         
         // 4. Insertar la nueva orden con el ID generado
-        const insertSql = `INSERT INTO ordenes_trabajo (orden_id, cliente_cedula, placa, fecha, estado, ciudad_id) VALUES (?, ?, ?, ?, ?, ?)`;
+        const insertSql = `INSERT INTO ordenes_trabajo (
+                            orden_id, 
+                            cliente_cedula, 
+                            placa, fecha, 
+                            estado, 
+                            ciudad_id, 
+                            forma_pago_id, 
+                            total
+                        ) VALUES (?, ?, ?, ?, ?, ?)`;
         db.run(insertSql, [newOrdenId, cliente_cedula, placa, fecha, estado, ciudad_id], function(err) {
             if (err) {
                 return res.status(500).json({ error: "Error al crear la orden: " + err.message });
@@ -91,3 +99,19 @@ exports.updateOrden = (req, res) => {
         res.status(200).json({ message: `Orden ${orden_id} actualizada.` });
     });
 };
+
+exports.detallesOrden = (req, res) => {
+    const { orden_id } = req.params;
+
+    const sql = `SELECT * FROM detalles_orden WHERE orden_id = ?`;
+
+    db.all(sql, [orden_id], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Detalles de orden no encontrados' });
+        }
+        res.status(200).json(rows);
+    });
+}

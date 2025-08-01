@@ -5,14 +5,16 @@ const {
     createOrden,
     getOrden,
     getOrdenesByCliente,
-    updateOrden
+    updateOrden,
+    detallesOrden
 } = require('../controllers/ordenController');
 
 router.get('/ordenes', getAllOrdenes);
 router.post('/orden', createOrden);
-router.get('/orden/id/:orden_id', getOrden);                // ✅ Buscar por ID
-router.get('/orden/cliente/:cedula', getOrdenesByCliente); // ✅ Buscar por cédula
+router.get('/orden/id/:orden_id', getOrden);
+router.get('/orden/cliente/:cedula', getOrdenesByCliente);
 router.put('/orden/:orden_id', updateOrden);
+router.get('/orden/detalles/:orden_id', detallesOrden);
 
 
 module.exports = router;

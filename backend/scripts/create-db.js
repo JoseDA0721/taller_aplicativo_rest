@@ -47,11 +47,14 @@ db.serialize(() => {
         fecha TEXT NOT NULL,
         estado TEXT NOT NULL,
         ciudad_id INTEGER,
-        total REAL DEFAULT 0,
+        forma_pago_id INTEGER,
+        total REAL,
         FOREIGN KEY (cliente_cedula) REFERENCES clientes(cedula),
         FOREIGN KEY (placa) REFERENCES vehiculos(placa),
-        FOREIGN KEY (ciudad_id) REFERENCES ciudades(id_ciudad)
+        FOREIGN KEY (ciudad_id) REFERENCES ciudades(id_ciudad),
+        FOREIGN KEY (forma_pago_id) REFERENCES formas_pago(forma_pago_id)
     )`);
+    
 
     db.run(`CREATE TABLE IF NOT EXISTS detalles_orden (
         detalle_id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -86,10 +89,10 @@ db.serialize(() => {
     db.run(`INSERT INTO vehiculos VALUES 
         ('ABC1234', 1, 'Toyota', 'Corolla', '1723456789'),
         ('XYZ5678', 2, 'Hyundai', 'Tucson', '0923456789')`);
-
+    
     db.run(`INSERT INTO ordenes_trabajo VALUES 
-        ('OT001', '1723456789', 'ABC1234', '2025-07-31', 'Pendiente', 1, 0),
-        ('OT002', '0923456789', 'XYZ5678', '2025-07-30', 'Finalizado', 2, 0)`);
+        ('OT001', '1723456789', 'ABC1234', '2025-07-31', 'Pendiente', 1, 1, 0),
+        ('OT002', '0923456789', 'XYZ5678', '2025-07-30', 'Finalizado', 2, 2, 0)`);
 
     // Insertar detalles con precios y luego actualizar el total
     db.run(`INSERT INTO detalles_orden (orden_id, servicio_id, producto_id, cantidad, precio) VALUES 
