@@ -182,7 +182,7 @@ const actualizarVehiculo = async () => {
 )}
 
 
-      <div className="overflow-x-auto rounded-lg shadow bg-white">
+  <div className="overflow-x-auto rounded-lg shadow bg-white">
         {editableVehiculo && (
   <div className="border rounded p-4 bg-gray-50 mt-2 space-y-3">
     <h3 className="font-bold text-[#001A30]">Editar Vehículo</h3>
@@ -193,7 +193,7 @@ const actualizarVehiculo = async () => {
         setEditableVehiculo({ ...editableVehiculo, marca: e.target.value })
       }
       placeholder="Marca"
-      className="border p-2 rounded w-full"
+      className="border p-2 rounded w-full text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
     />
     <input
       type="text"
@@ -202,7 +202,7 @@ const actualizarVehiculo = async () => {
         setEditableVehiculo({ ...editableVehiculo, modelo: e.target.value })
       }
       placeholder="Modelo"
-      className="border p-2 rounded w-full"
+      className="border p-2 rounded w-full text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
     />
     <input
       type="text"
@@ -211,7 +211,7 @@ const actualizarVehiculo = async () => {
         setEditableVehiculo({ ...editableVehiculo, tipo: e.target.value })
       }
       placeholder="Tipo"
-      className="border p-2 rounded w-full"
+      className="border p-2 rounded w-full text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
     />
     <button
       onClick={actualizarVehiculo}
@@ -221,6 +221,8 @@ const actualizarVehiculo = async () => {
     </button>
   </div>
 )}
+
+
 
         <table className="min-w-full text-sm">
           <thead className="bg-blue-100 text-blue-800">

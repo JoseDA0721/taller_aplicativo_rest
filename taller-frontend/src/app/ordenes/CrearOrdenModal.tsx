@@ -317,13 +317,13 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
                     </div>
 
                     <div className="mt-4">
-                        <h5 className="font-semibold text-sm text-gray-70">Detalles:</h5>
+                        <h5 className="font-semibold text-sm text-gray-800">Detalles:</h5>
                         {form.detalles.length === 0 ? (
                             <p className="text-sm text-gray-50 mt-2 p-2 bg-gray-50 rounded">No hay items en la orden.</p>
                         ) : (
                             <div className="mt-2 border rounded max-h-48 overflow-y-auto">
                                 {form.detalles.map((item, index) => (
-                                    <div key={index} className="flex justify-between items-center p-2 border-b last:border-b-0">
+                                    <div key={index} className="flex justify-between items-center text-gray-500 p-2 border-b last:border-b-0">
                                         <span className="text-sm">{item.nombre} (x{item.cantidad})</span>
                                         <div className="flex items-center gap-4">
                                         <span className="text-sm font-semibold">${(item.precio * item.cantidad).toFixed(2)}</span>
@@ -333,7 +333,7 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
                                         </div>
                                     </div>
                                 ))}
-                                <div className="flex justify-end p-2 bg-gray-1 font-bold text-lg">
+                                <div className="flex justify-end p-2 bg-gray-1 font-bold text-lg text-gray-800">
                                     Total: ${totalOrden.toFixed(2)}
                                 </div>
                             </div>

@@ -64,27 +64,8 @@ useEffect(() => {
           <p className="text-gray-700 flex items-center gap-2 mb-1">
             ⏰ Última sincronización: <strong>{fechaSync}</strong>
           </p>
-          <p className="text-gray-700 flex items-center gap-2">
-            🌐 Nodo activo: <strong>Guayaquil</strong>
-          </p>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="mt-12 flex gap-[24px] flex-wrap items-center justify-center">
-        <a className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn" target="_blank" rel="noopener noreferrer">
-          <Image aria-hidden src="/file.svg" alt="File icon" width={16} height={16} /> Learn
-        </a>
-        <a className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates" target="_blank" rel="noopener noreferrer">
-          <Image aria-hidden src="/window.svg" alt="Window icon" width={16} height={16} /> Examples
-        </a>
-        <a className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org" target="_blank" rel="noopener noreferrer">
-          <Image aria-hidden src="/globe.svg" alt="Globe icon" width={16} height={16} /> Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   )
 }

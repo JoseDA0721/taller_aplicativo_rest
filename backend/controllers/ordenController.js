@@ -37,9 +37,7 @@ exports.getOrdenesByCliente = (req, res) => {
         res.status(200).json(rows);
     });
 };
-
-// --- FUNCIÓN MODIFICADA ---
-// Crear una nueva orden con la secuencia OT001, OT002, etc.
+// Crear una nueva orden de trabajo
 exports.createOrden = (req, res) => {
     const { cliente_cedula, placa, fecha, estado, ciudad_id } = req.body;
 
