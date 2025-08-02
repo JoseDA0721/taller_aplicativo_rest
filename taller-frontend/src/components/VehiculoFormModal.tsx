@@ -43,7 +43,7 @@ export default function VehiculoFormModal({ onClose, onCreated }: VehiculoFormPr
             const data = await fetchTiposVehiculo(); // Llama a la API
             setTiposVehiculo(data);
         } catch (err) {
-            setError("No se pudieron cargar los tipos de vehículo.");
+            setError("No se pudieron cargar los tipos de vehículo." + err);
         }
     };
     loadTipos();
