@@ -36,7 +36,7 @@ jobs:
       run: npm run build
 
     - name: Tests
-      run: npm test
+      run: echo "No hay tests definidos para el frontend"
   # --- Trabajo para el Backend ---
   backend:
     name: Backend Checks
@@ -58,7 +58,10 @@ jobs:
 
     - name: Instalar dependencias
       run: npm install
-
+    
+    - name: Initialize Database
+      run: node scripts/create-db.js
+      
     - name: Linting
       run: npm run lint
 
