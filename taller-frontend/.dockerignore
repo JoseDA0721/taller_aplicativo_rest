@@ -1,0 +1,11 @@
+# Ignorar las dependencias de Node instaladas en la máquina local.
+node_modules
+
+# Ignorar logs de npm
+npm-debug.log
+
+# Ignorar el directorio de build de Next.js
+.next
+
+# Ignorar variables de entorno locales
+.env.local

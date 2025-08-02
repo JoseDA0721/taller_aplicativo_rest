@@ -1,12 +1,12 @@
-// --- Interfaces para un tipado estricto ---
+// --- Interfaces para un tipado estricto y correcto ---
 
-// Describe los datos que se envían al backend para crear un vehículo
+// Describe los datos que se envían al backend para crear un vehículo.
+// Corregido para coincidir con la estructura de tu API.
 interface NewVehiculo {
   placa: string;
   marca: string;
   modelo: string;
-  anio: number;
-  cliente_id: string; // Cédula del cliente
+  cliente_cedula: string; // Se usa la cédula del cliente
   tipo_id: number;
 }
 
@@ -16,8 +16,7 @@ interface VehiculoFromAPI {
   placa: string;
   marca: string;
   modelo: string;
-  anio: number;
-  cliente_id: string;
+  cliente_cedula: string;
   tipo_id: number;
 }
 
@@ -42,7 +41,6 @@ export async function getVehiculos(): Promise<VehiculoFromAPI[]> {
 
 /**
  * Crea un nuevo vehículo en la base de datos.
- * SOLUCIÓN: Usamos la interfaz 'NewVehiculo' en lugar de 'any'.
  */
 export async function createVehiculo(vehiculo: NewVehiculo): Promise<{ success: boolean; message?: string }> {
   try {
@@ -54,14 +52,12 @@ export async function createVehiculo(vehiculo: NewVehiculo): Promise<{ success: 
 
     if (!res.ok) {
       const errorData = await res.json();
-      // Devuelve el mensaje de error específico del backend si está disponible
       return { success: false, message: errorData.message || 'Error desconocido al crear el vehículo.' };
     }
 
     return { success: true };
   } catch (error) {
     console.error('Error en createVehiculo:', error);
-    // Devuelve un mensaje de error genérico y claro
     const message = error instanceof Error ? error.message : 'Error de conexión al crear el vehículo.';
     return { success: false, message };
   }

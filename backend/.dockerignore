@@ -1,0 +1,12 @@
+# Ignorar las dependencias de Node instaladas en la máquina local.
+# Esto fuerza al Dockerfile a usar las que se instalan DENTRO del contenedor.
+node_modules
+
+# Ignorar logs de npm
+npm-debug.log
+
+# No incluir la base de datos en la imagen, se maneja con volúmenes.
+taller.sqlite
+
+# Ignorar variables de entorno locales
+.env

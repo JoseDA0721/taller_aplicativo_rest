@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Servicio del Backend
+  backend:
+    build:
+      context: ./backend # Directorio donde está el Dockerfile del backend
+      dockerfile: Dockerfile
+    container_name: taller_backend
+    restart: unless-stopped
+    ports:
+      # Mapea el puerto 5000 del contenedor al puerto 5000 de tu máquina
+      - "5000:5000"
+    volumes:
+      # Monta el archivo de la base de datos para que los datos persistan
+      - ./backend/taller.sqlite:/app/taller.sqlite
+    networks:
+      - taller-net
+
+  # Servicio del Frontend
+  frontend:
+    build:
+      context: ./taller-frontend # Directorio donde está el Dockerfile del frontend
+      dockerfile: Dockerfile
+    container_name: taller_frontend
+    restart: unless-stopped
+    ports:
+      # Mapea el puerto 3000 del contenedor al puerto 3000 de tu máquina
+      - "3000:3000"
+    depends_on:
+      - backend # El frontend no arrancará hasta que el backend esté listo
+    networks:
+      - taller-net
+
+# Definimos la red que usarán los contenedores para comunicarse
+networks:
+  taller-net:
+    driver: bridge
