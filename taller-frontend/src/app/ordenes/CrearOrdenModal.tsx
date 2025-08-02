@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog } from '@headlessui/react';
 import { getClienteDetails } from '@/services/clienteService';
@@ -21,7 +23,7 @@ interface Orden {
   estado: string;
   ciudad_id: number;
   forma_pago_id: number;
-  detalles: Omit<Detalle, 'nombre'>[]; // 'nombre' no se envía al backend
+  detalles: Omit<Detalle, 'nombre'>[];
 }
 
 interface VehiculoSimple {
@@ -49,26 +51,24 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
     cliente_cedula: '',
     placa: '',
     fecha: new Date().toISOString().split('T')[0],
-    estado: 'Recibida', // El estado por defecto ahora es "Recibida"
+    estado: 'Recibida',
     ciudad_id: 1,
-    forma_pago_id: 1, // Pago por defecto
+    forma_pago_id: 1,
     detalles: [] as Detalle[]
   });
 
-  // Estados para la validación del cliente
   const [cedulaInput, setCedulaInput] = useState('');
   const [isValidated, setIsValidated] = useState(false);
   const [clientVehicles, setClientVehicles] = useState<VehiculoSimple[]>([]);
   const [validationMessage, setValidationMessage] = useState({ type: '', text: '' });
   const [isLoading, setIsLoading] = useState(false);
   
-  // Estados para el catálogo y la selección de items
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [selectedItem, setSelectedItem] = useState({ type: 'servicio', id: '' });
-  const [quantity, setQuantity] = useState(1);
   
-  // Carga el catálogo de servicios y productos cuando se abre el modal
+  const quantity = 1;
+  
   useEffect(() => {
     if (isOpen) {
       const loadCatalogs = async () => {
@@ -102,8 +102,10 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
 
     const result = await getClienteDetails(cedulaInput);
 
-    if (result.success) {
-      const { cliente, vehiculos } = result.data || { cliente: null, vehiculos: [] };
+    // SOLUCIÓN: Añadimos una comprobación para 'cliente'
+    if (result.success && result.data && result.data.cliente) {
+      const { cliente, vehiculos } = result.data;
+      
       setForm(prev => ({
         ...prev,
         cliente_cedula: cliente.cedula,
@@ -115,7 +117,7 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
       setValidationMessage({ type: 'success', text: `Cliente: ${cliente.nombre}` });
     } else {
       setClientVehicles([]);
-      setValidationMessage({ type: 'error', text: result.message || 'Cliente no encontrado.' });
+      setValidationMessage({ type: 'error', text: result.message || 'Cliente no encontrado o datos incompletos.' });
     }
     setIsLoading(false);
   };
@@ -160,7 +162,7 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
     if (newItem) {
         setForm(prevForm => ({
             ...prevForm,
-            detalles: [...prevForm.detalles, newItem!],
+            detalles: [...prevForm.detalles, newItem],
         }));
     }
   };
@@ -178,15 +180,15 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
 
   const handleCrear = async () => {
     if (!isValidated) {
-      alert("Por favor, valide la cédula del cliente antes de guardar.");
+      setValidationMessage({ type: 'error', text: "Por favor, valide la cédula del cliente antes de guardar." });
       return;
     }
     if (clientVehicles.length > 0 && !form.placa) {
-      alert("Por favor, seleccione un vehículo para la orden.");
+      setValidationMessage({ type: 'error', text: "Por favor, seleccione un vehículo para la orden." });
       return;
     }
     if (form.detalles.length === 0) {
-      alert("Debe agregar al menos un producto o servicio a la orden.");
+      setValidationMessage({ type: 'error', text: "Debe agregar al menos un producto o servicio a la orden." });
       return;
     }
 
@@ -194,7 +196,8 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
 
     const orderData: Orden = {
       ...form,
-      detalles: form.detalles.map(({ nombre, ...rest }) => rest) // Excluye 'nombre' del objeto final
+      // CORRECCIÓN: Se excluye explícitamente la propiedad 'nombre'
+      detalles: form.detalles.map(({ ...rest }) => rest)
     };
     
     try {
@@ -213,7 +216,8 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
       setIsOpen(false);
     } catch (error) {
       console.error('Error al crear orden:', error);
-      setValidationMessage({ type: 'error', text: (error as Error).message });
+      const message = error instanceof Error ? error.message : 'Error desconocido.';
+      setValidationMessage({ type: 'error', text: message });
     }
     setIsLoading(false);
   };
@@ -224,6 +228,7 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
     return 'text-gray-600';
   };
 
+  // El resto del JSX no cambia...
   return (
     <>
       <button
@@ -234,7 +239,7 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
       </button>
 
       <Dialog open={isOpen} onClose={() => setIsOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <Dialog.Panel className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
+        <Dialog.Panel className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
           <Dialog.Title className="text-2xl font-bold text-blue-700 mb-4">Nueva Orden</Dialog.Title>
 
           <div className="space-y-4">
@@ -280,7 +285,6 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
                   <p className="text-sm text-gray-500 bg-gray-100 p-2 rounded">Este cliente no tiene vehículos registrados.</p>
                 )}
                 
-                {/* --- CAMBIO AÑADIDO AQUÍ --- */}
                 <div className="mt-4">
                   <label htmlFor="forma_pago_id" className="block text-sm font-medium text-gray-700">Forma de Pago</label>
                   <select
@@ -295,9 +299,7 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
                     <option value={3}>Transferencia</option>
                   </select>
                 </div>
-                {/* --- FIN DEL CAMBIO --- */}
 
-                {/* --- SECCIÓN PARA AÑADIR PRODUCTOS/SERVICIOS --- */}
                 <div className="mt-4 border-t pt-4">
                     <h4 className="font-semibold text-gray-800 mb-2">Añadir Items a la Orden</h4>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
@@ -357,7 +359,6 @@ export default function CrearOrdenModal({ onSuccess }: { onSuccess: () => void }
                 </div>
               </>
             )}
-
           </div>
 
           <div className="mt-6 flex justify-end gap-3">

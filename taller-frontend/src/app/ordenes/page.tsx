@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import CrearOrdenModal from './CrearOrdenModal' 
 import OrdenesTabla from './OrdenesTabla' 
-import DetallesOrdenModal from './DetallesOrdenModal'; // <-- Importa el nuevo modal
+import DetallesOrdenModal from './DetallesOrdenModal';
 
 // --- Interfaces para tipado ---
 interface DetalleItem {
@@ -22,7 +22,7 @@ interface Orden {
   ciudad_id: number;
   forma_pago_id: number;
   total: number;
-  detalles?: DetalleItem[]; // Opcional, para el modal
+  detalles?: DetalleItem[];
 }
 
 // --- Componente principal de la página ---
@@ -32,7 +32,7 @@ export default function OrdenesPage() {
   const [ordenesMostradas, setOrdenesMostradas] = useState<Orden[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [ordenSeleccionada, setOrdenSeleccionada] = useState<Orden | null>(null); // <-- Estado para el modal
+  const [ordenSeleccionada, setOrdenSeleccionada] = useState<Orden | null>(null);
 
   // --- Estados para los inputs de búsqueda ---
   const [busquedaId, setBusquedaId] = useState('')
@@ -44,12 +44,18 @@ export default function OrdenesPage() {
     try {
       const res = await fetch('http://localhost:5000/api/ordenes')
       if (!res.ok) throw new Error('Error al conectar con el servidor.')
-      const data = await res.json()
+      
+      const data: Orden[] = await res.json() // Le decimos a TS que esperamos un array de Orden
       const ordenesArray = Array.isArray(data) ? data : []
+      
       setTodasLasOrdenes(ordenesArray)
       setOrdenesMostradas(ordenesArray)
-    } catch (err: any) {
-      setError(err.message || 'No se pudieron cargar las órdenes.')
+    } catch (err) { // SOLUCIÓN: Eliminamos 'any' y tratamos 'err' como 'unknown'
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('No se pudieron cargar las órdenes.')
+      }
       console.error(err)
     } finally {
       setCargando(false)
@@ -80,20 +86,27 @@ export default function OrdenesPage() {
 
   // --- Lógica para actualizar estado de una orden ---
   const handleEstadoChange = async (ordenId: string, nuevoEstado: string) => {
+    // Función auxiliar para actualizar el estado localmente
+    const actualizarOrdenLocal = (ordenes: Orden[]) =>
+        ordenes.map(o => (o.orden_id === ordenId ? { ...o, estado: nuevoEstado } : o));
+
+    // Optimistic UI: Actualizamos la UI inmediatamente
+    setTodasLasOrdenes(actualizarOrdenLocal);
+    setOrdenesMostradas(actualizarOrdenLocal);
+
     try {
       const res = await fetch(`http://localhost:5000/api/orden/${ordenId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado: nuevoEstado }),
       })
-      if (!res.ok) throw new Error('No se pudo actualizar el estado.')
-      const actualizarOrden = (ordenes: Orden[]) =>
-        ordenes.map(o => (o.orden_id === ordenId ? { ...o, estado: nuevoEstado } : o))
-      setTodasLasOrdenes(actualizarOrden)
-      setOrdenesMostradas(actualizarOrden)
+      if (!res.ok) throw new Error('No se pudo actualizar el estado en el servidor.')
+    
     } catch (error) {
       console.error('Error al cambiar estado:', error)
-      alert('No se pudo actualizar el estado de la orden.')
+      alert('No se pudo actualizar el estado de la orden. Revirtiendo cambios.')
+      // Si hay un error, revertimos los cambios en la UI
+      fetchOrdenes(); 
     }
   }
 
@@ -103,15 +116,16 @@ export default function OrdenesPage() {
       const res = await fetch(`http://localhost:5000/api/orden/detalles/${ordenId}`);
       if (!res.ok) throw new Error('No se pudieron cargar los detalles.');
       
-      const detallesData = await res.json();
+      const detallesData: DetalleItem[] = await res.json();
       const ordenCompleta = todasLasOrdenes.find(o => o.orden_id === ordenId);
 
       if (ordenCompleta) {
         setOrdenSeleccionada({ ...ordenCompleta, detalles: detallesData });
       }
-    } catch (err: any) {
-      alert(err.message);
-      console.error(err);
+    } catch (err) { // SOLUCIÓN: Eliminamos 'any' y tratamos 'err' como 'unknown'
+        const errorMessage = err instanceof Error ? err.message : 'Ocurrió un error desconocido.';
+        alert(errorMessage);
+        console.error(err);
     }
   };
 
@@ -177,12 +191,11 @@ export default function OrdenesPage() {
           <OrdenesTabla
             ordenes={ordenesMostradas}
             onEstadoChange={handleEstadoChange}
-            onVerDetalles={handleVerDetalles} // <-- Pasa la nueva función a la tabla
+            onVerDetalles={handleVerDetalles}
           />
         )}
       </div>
 
-      {/* Renderiza el modal si hay una orden seleccionada */}
       <DetallesOrdenModal orden={ordenSeleccionada} onClose={cerrarModal} />
     </div>
   )

@@ -1,173 +1,107 @@
-// taller-frontend/src/components/VehiculoFormModal.tsx
-
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { FaTimes } from 'react-icons/fa'
-import { createVehiculo } from '@/services/vehiculoService'
-// Importamos el servicio de cliente para verificar la cédula
-import { getClienteDetails } from '@/services/clienteService'
-import { fetchTiposVehiculo } from '@/services/catalogoApi'
+import React, { useState } from 'react';
+import { Dialog } from '@headlessui/react';
+import { createVehiculo } from '@/services/vehiculoService';
 
-interface TipoVehiculo {
-  tipo_id: number
-  nombre: string
+// --- Interfaces para un tipado estricto ---
+interface VehiculoFormProps {
+  onClose: () => void;
+  onCreated: () => void;
 }
 
-interface Props {
-  onClose: () => void
-  onCreated: () => void
+interface NewVehiculo {
+  placa: string;
+  marca: string;
+  modelo: string;
+  anio: number;
+  cliente_id: string; // Cédula del cliente
+  tipo_id: number;
 }
 
-export default function VehiculoFormModal({ onClose, onCreated }: Props) {
+export default function VehiculoFormModal({ onClose, onCreated }: VehiculoFormProps) {
   const [form, setForm] = useState({
     placa: '',
     marca: '',
     modelo: '',
-    tipo_id: '',
-    cliente_cedula: ''
-  })
-  const [tipos, setTipos] = useState<TipoVehiculo[]>([])
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+    anio: '', // SOLUCIÓN: Añadimos 'anio' al estado del formulario
+    cliente_cedula: '',
+    tipo_id: '1', // Valor por defecto para el select
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    async function loadTipos() {
-      try {
-        const tiposData = await fetchTiposVehiculo()
-        setTipos(tiposData)
-      } catch (err) {
-        setError('No se pudieron cargar los tipos de vehículo.')
-        console.error(err)
-      }
-    }
-    loadTipos()
-  }, [])
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+    e.preventDefault();
+    setError(null);
 
-    if (
-      !form.placa ||
-      !form.marca ||
-      !form.modelo ||
-      !form.tipo_id ||
-      !form.cliente_cedula
-    ) {
-      setError('Todos los campos son obligatorios.')
-      setLoading(false)
-      return
+    // Validación simple de campos
+    if (!form.placa || !form.marca || !form.modelo || !form.anio || !form.cliente_cedula) {
+      setError('Todos los campos son obligatorios.');
+      return;
     }
 
-    // --- MEJORA: Verificación de existencia del cliente ---
-    const clientCheck = await getClienteDetails(form.cliente_cedula)
-    if (!clientCheck.success) {
-      setError(
-        'El cliente con esa cédula no existe. Por favor, regístrelo primero.'
-      )
-      setLoading(false)
-      return
-    }
-    // --- FIN DE LA MEJORA ---
+    setIsLoading(true);
 
-    const result = await createVehiculo({
-      ...form,
-      tipo_id: Number(form.tipo_id)
-    })
+    // SOLUCIÓN: Creamos el objeto 'payload' con la estructura correcta
+    const payload: NewVehiculo = {
+      placa: form.placa,
+      marca: form.marca,
+      modelo: form.modelo,
+      anio: parseInt(form.anio, 10), // Convertimos el año a número
+      cliente_id: form.cliente_cedula, // Mapeamos cliente_cedula a cliente_id
+      tipo_id: parseInt(form.tipo_id, 10),
+    };
 
-    setLoading(false)
+    const result = await createVehiculo(payload);
 
     if (result.success) {
-      onCreated()
-      onClose()
+      onCreated(); // Llama a la función para refrescar la lista
     } else {
-      setError(result.message || 'Error al registrar vehículo')
+      setError(result.message || 'Ocurrió un error al crear el vehículo.');
     }
-  }
+    setIsLoading(false);
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
-        >
-          <FaTimes />
-        </button>
-        <h3 className="text-lg font-bold text-blue-800 mb-4">
-          Registrar Vehículo
-        </h3>
-
-        {error && (
-          <p className="bg-red-100 text-red-700 px-3 py-2 rounded mb-3">
-            {error}
-          </p>
-        )}
-
+    <Dialog open={true} onClose={onClose} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <Dialog.Panel className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+        <Dialog.Title className="text-2xl font-bold text-blue-700 mb-4">Nuevo Vehículo</Dialog.Title>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            name="placa"
-            placeholder="Placa"
-            className="w-full border p-2 rounded text-gray-900"
-            value={form.placa}
-            onChange={handleChange}
-          />
-          <input
-            name="marca"
-            placeholder="Marca"
-            className="w-full border p-2 rounded text-gray-900"
-            value={form.marca}
-            onChange={handleChange}
-          />
-          <input
-            name="modelo"
-            placeholder="Modelo"
-            className="w-full border p-2 rounded text-gray-900"
-            value={form.modelo}
-            onChange={handleChange}
-          />
+          <input name="placa" value={form.placa} onChange={handleChange} placeholder="Placa" className="border p-2 w-full rounded" />
+          <input name="marca" value={form.marca} onChange={handleChange} placeholder="Marca" className="border p-2 w-full rounded" />
+          <input name="modelo" value={form.modelo} onChange={handleChange} placeholder="Modelo" className="border p-2 w-full rounded" />
+          {/* SOLUCIÓN: Añadimos el input para el año */}
+          <input name="anio" type="number" value={form.anio} onChange={handleChange} placeholder="Año" className="border p-2 w-full rounded" />
+          <input name="cliente_cedula" value={form.cliente_cedula} onChange={handleChange} placeholder="Cédula del Cliente" className="border p-2 w-full rounded" />
+          
+          <div>
+            <label htmlFor="tipo_id" className="block text-sm font-medium text-gray-700">Tipo de Vehículo</label>
+            <select name="tipo_id" id="tipo_id" value={form.tipo_id} onChange={handleChange} className="mt-1 block w-full border p-2 rounded">
+              <option value="1">Sedán</option>
+              <option value="2">SUV</option>
+              <option value="3">Pickup</option>
+            </select>
+          </div>
 
-          <select
-            name="tipo_id"
-            value={form.tipo_id}
-            onChange={handleChange}
-            className="w-full border p-2 rounded text-gray-900 bg-white"
-          >
-            <option value="" disabled>
-              Seleccione un tipo de vehículo
-            </option>
-            {tipos.map((tipo) => (
-              <option key={tipo.tipo_id} value={tipo.tipo_id}>
-                {tipo.nombre}
-              </option>
-            ))}
-          </select>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
-          <input
-            name="cliente_cedula"
-            placeholder="Cédula del Dueño"
-            className="w-full border p-2 rounded text-gray-900"
-            value={form.cliente_cedula}
-            onChange={handleChange}
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-          >
-            {loading ? 'Guardando...' : 'Guardar'}
-          </button>
+          <div className="mt-6 flex justify-end gap-3">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm bg-gray-300 hover:bg-gray-400 rounded font-semibold">
+              Cancelar
+            </button>
+            <button type="submit" disabled={isLoading} className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold disabled:bg-blue-300">
+              {isLoading ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
         </form>
-      </div>
-    </div>
-  )
+      </Dialog.Panel>
+    </Dialog>
+  );
 }
