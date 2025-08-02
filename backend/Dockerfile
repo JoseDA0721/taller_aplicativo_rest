@@ -1,25 +1,26 @@
 # --- Etapa 1: Build ---
-# Usamos una imagen ligera de Node.js
-FROM node:22-alpine AS base
+    FROM node:22-alpine AS base
 
-# Establecemos el directorio de trabajo dentro del contenedor
-WORKDIR /app
-
-# Copiamos los archivos de dependencias
-COPY package*.json ./
-
-# Instalamos solo las dependencias de producción para mantener la imagen ligera
-RUN npm install --production
-
-# Copiamos el resto del código de la aplicación
-COPY . .
-
-# --- Etapa 2: Producción ---
-# La imagen final será más pequeña porque no incluye dependencias de desarrollo
-FROM base
-
-# Exponemos el puerto en el que corre nuestra API
-EXPOSE 5000
-
-# El comando que se ejecutará cuando el contenedor inicie
-CMD [ "node", "server.js" ]
+    WORKDIR /app
+    
+    # Copiamos los archivos de dependencias
+    COPY package*.json ./
+    
+    # Instalamos solo las dependencias de producción
+    RUN npm install --production
+    
+    # Copiamos el resto del código de la aplicación
+    COPY . .
+    
+    # --- Etapa 2: Producción ---
+    FROM base
+    
+    EXPOSE 5000
+    
+    # --- SOLUCIÓN: Lógica de inicialización integrada ---
+    # Este comando se ejecuta cada vez que el contenedor inicia.
+    # 1. Comprueba si el archivo de la base de datos NO existe (! -f).
+    # 2. Si no existe, ejecuta el script para crearla (&& node ...).
+    # 3. Finalmente, inicia el servidor (&& node server.js).
+    CMD ["sh", "-c", "if [ ! -f /app/taller.sqlite ]; then node /app/scripts/create-db.js; fi && node server.js"]
+    
